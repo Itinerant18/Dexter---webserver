@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="{{ url_for('static', filename='led.css') }}">
+    <title>Security Panel</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Security Panel Control</h1>
+      <form method="POST" action="/control">
+        <button class="btn" name="led" value="1">{{ 'Turn LED 1 ' + ('OFF' if led_states[1] else 'ON') }}</button><br><br>
+        <button class="btn" name="led" value="2">{{ 'Turn LED 2 ' + ('OFF' if led_states[2] else 'ON') }}</button><br><br>
+        <button class="btn" name="led" value="3">{{ 'Turn LED 3 ' + ('OFF' if led_states[3] else 'ON') }}</button>
+      </form>
+    </div>
+  </body>
+</html>

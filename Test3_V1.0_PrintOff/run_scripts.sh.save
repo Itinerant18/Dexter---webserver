@@ -1,0 +1,5 @@
+#!/bin/bash
+/usr/bin/python2 /home/pi/Test3/TLChronosProMAIN_391.py &/usr/bin/python2 /home/pi/Test3/SerialCommunication.py &
+
+wait
+

@@ -1,0 +1,495 @@
+{% extends "layout.html" %}
+{% block title %}Output Controls{% endblock %}
+{% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/output_controls.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="main-content">
+    <div class="path_content" id="path_content">
+        <div id="breadcrumbContainer">
+            <h5><img src="https://img.icons8.com/fluency/96/output.png" 
+                class="menu-icon" style="width: 30px; height: 30px; vertical-align: middle; margin-right: 8px;">
+                Device Configuration > Output Management</h5>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1><i class="fas fa-sliders-h"></i> Output Management</h1>
+        
+        <div class="toggle-container">
+            <div class="toggle-item">
+                <span class="toggle-label">
+                    <i class="fas fa-link"></i> Active Integration
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="activeIntegration">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="toggle-item">
+                <span class="toggle-label">
+                    <i class="fas fa-video"></i> Active Integration Hikevision NVR
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="hikevisionNVR">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="toggle-item">
+                <span class="toggle-label">
+                    <i class="fas fa-door-open"></i> Active Integration Hikvision Access Controls
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="accessControls">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="toggle-item">
+                <span class="toggle-label">
+                    <i class="fas fa-camera"></i> Active Integration Dahua NVR
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="dahuaNVR">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="toggle-item">
+                <span class="toggle-label">
+                    <i class="fas fa-video"></i> Active Integration CP PLUS NVR
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="cpplusNVR">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="toggle-item">
+                <span class="toggle-label">
+                    <i class="fas fa-video"></i> Active Integration SPARS NVR
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="sparsNVR">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+      <!-- <div class="button-container">
+            <button class="enter-button" onclick="handleRelayConfig()" id="relayConfigBtn">
+                <i class="fas fa-plug"></i> <span>Relay Config</span>
+            </button>
+            <button class="enter-button" onclick="handleActionTrigger()" id="actionTriggerBtn">
+                <i class="fas fa-bolt"></i> <span>Action on Trigger</span>
+            </button>
+            <button class="enter-button" onclick="handleClearBuffer()" id="clearBufferBtn">
+                <i class="fas fa-trash"></i> <span>Clear Buffer</span>
+            </button>
+        </div>
+    -->
+
+    </div>
+</div>
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function(){
+
+        // Active Integration
+
+                function sendData_to_ai(ac_activated){
+                    var data ={
+                        "active_integration_external_device" : ac_activated,
+                    };
+
+                    fetch('/data_active_integration',{
+                        method: 'PUT',
+                        headers:{
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response=>{
+                        if(response.ok){
+                            console.log("Data sent")
+                        }else{
+                            console.log("Error sending data")
+                        }
+                    })
+                    .catch(error=>{
+                        console.log("Error sending data")
+                    })
+                }
+
+                function toggleac(){
+                    var acToggle = document.getElementById("activeIntegration");
+                   
+                    if(acToggle.checked){
+                        sendData_to_ai(true)
+                    }else{
+                        sendData_to_ai(false)
+                    }
+                }
+
+                function initializegsm(){
+                    fetch('/get_activeIntegration')
+                    .then(response=>{
+                        if(!response.ok){
+                            console.log("Error getting gsm status");
+                        }
+                        return response.json()
+                    })
+                    .then(data=>{
+                        var acToggle = document.getElementById("activeIntegration");
+                       
+
+                        var active_ntegration = parseInt(data[0][1]);
+
+                        acToggle.checked = active_ntegration;
+                        
+                    })
+                    .catch(error=>{
+                        console.log("Error getting gsm status")
+                    })
+                }
+                initializegsm();
+
+                var activeIntegrationToggle = document.getElementById("activeIntegration");
+                if(activeIntegrationToggle){
+                    activeIntegrationToggle.addEventListener("change", toggleac);
+                }
+
+
+
+    // active integration hikvision nvr
+
+                function sendData_to_ai_hk(ac_activated_hk){
+                    var data ={
+                        "active_integration_hikvision" : ac_activated_hk
+                    };
+
+                    fetch('/data_active_integration_hikvidion',{
+                        method: 'PUT',
+                        headers:{
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response=>{
+                        if(response.ok){
+                            console.log("Data sent")
+                        }else{
+                            console.log("Error sending data")
+                        }
+                    })
+                    .catch(error=>{
+                        console.log("Error sending data")
+                    })
+                }
+
+                function toggleac1(){
+                    var acToggle = document.getElementById("hikevisionNVR");
+                   
+                    if(acToggle.checked){
+                        sendData_to_ai_hk(true)
+                    }else{
+                        sendData_to_ai_hk(false)
+                    }
+                }
+
+                function initializegsm1(){
+                    fetch('/get_active_integration_hikvidion')
+                    .then(response=>{
+                        if(!response.ok){
+                            console.log("Error getting gsm status");
+                        }
+                        return response.json()
+                    })
+                    .then(data=>{
+                        var acToggle = document.getElementById("hikevisionNVR");
+                       
+
+                        var active_ntegration = parseInt(data[0][2]);
+                        // console.log(data)
+                        acToggle.checked = active_ntegration;
+                        
+                    })
+                    .catch(error=>{
+                        console.log("Error getting gsm status")
+                    })
+                }
+                initializegsm1();
+
+                var activeIntegrationhikToggle = document.getElementById("hikevisionNVR");
+                if(activeIntegrationhikToggle){
+                    activeIntegrationhikToggle.addEventListener("change", toggleac1);
+                }
+
+    
+
+    // active integration access controls
+
+               function sendData_to_ai_ac(ac_activated_ac){
+                    var data ={
+                        "active_integration_ac" : ac_activated_ac
+                    };
+
+                    fetch('/data_active_integration_ac',{
+                        method: 'PUT',
+                        headers:{
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response=>{
+                        if(response.ok){
+                            console.log("Data sent")
+                        }else{
+                            console.log("Error sending data")
+                        }
+                    })
+                    .catch(error=>{
+                        console.log("Error sending data")
+                    })
+                }
+
+                function toggleac2(){
+                    var acToggle = document.getElementById("accessControls");
+                   
+                    if(acToggle.checked){
+                        sendData_to_ai_ac(true)
+                    }else{
+                        sendData_to_ai_ac(false)
+                    }
+                }
+
+                function initializegsm2(){
+                    fetch('/get_active_integration_ac')
+                    .then(response=>{
+                        if(!response.ok){
+                            console.log("Error getting gsm status");
+                        }
+                        return response.json()
+                    })
+                    .then(data=>{
+                        var acToggle = document.getElementById("accessControls");
+                       
+
+                        var active_ntegration = parseInt(data[0][2]);
+                        // console.log(data)
+                        acToggle.checked = active_ntegration;
+                        
+                    })
+                    .catch(error=>{
+                        console.log("Error getting gsm status")
+                    })
+                }
+                initializegsm2();
+
+                var activeIntegrationacToggle = document.getElementById("accessControls");
+                if(activeIntegrationacToggle){
+                    activeIntegrationacToggle.addEventListener("change", toggleac2);
+                } 
+
+
+    // active integration dahua nvr
+    
+                function sendData_to_ai_dh(ac_activated_dh){
+                    var data ={
+                        "active_integration_dh" : ac_activated_dh
+                    };
+
+                    fetch('/data_active_integration_dh',{
+                        method: 'PUT',
+                        headers:{
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response=>{
+                        if(response.ok){
+                            console.log("Data sent")
+                        }else{
+                            console.log("Error sending data")
+                        }
+                    })
+                    .catch(error=>{
+                        console.log("Error sending data")
+                    })
+                }
+
+                function toggleac3(){
+                    var acToggle = document.getElementById("dahuaNVR");
+                   
+                    if(acToggle.checked){
+                        sendData_to_ai_dh(true)
+                    }else{
+                        sendData_to_ai_dh(false)
+                    }
+                }
+
+                function initializegsm3(){
+                    fetch('/get_active_integration_dh')
+                    .then(response=>{
+                        if(!response.ok){
+                            console.log("Error getting gsm status");
+                        }
+                        return response.json()
+                    })
+                    .then(data=>{
+                        var acToggle = document.getElementById("dahuaNVR");
+                       
+
+                        var active_ntegration = parseInt(data[0][2]);
+                        // console.log(data)
+                        acToggle.checked = active_ntegration;
+                        
+                    })
+                    .catch(error=>{
+                        console.log("Error getting gsm status")
+                    })
+                }
+                initializegsm3();
+
+                var activeIntegrationdhToggle = document.getElementById("dahuaNVR");
+                if(activeIntegrationdhToggle){
+                    activeIntegrationdhToggle.addEventListener("change", toggleac3);
+                } 
+
+
+    // active integration CP PLUS nvr
+    
+                function sendData_to_ai_cp(ac_activated_cp){
+                    var data ={
+                        "active_integration_cp" : ac_activated_cp
+                    };
+
+                    fetch('/data_active_integration_cp',{
+                        method: 'PUT',
+                        headers:{
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response=>{
+                        if(response.ok){
+                            console.log("Data sent")
+                        }else{
+                            console.log("Error sending data")
+                        }
+                    })
+                    .catch(error=>{
+                        console.log("Error sending data")
+                    })
+                }
+
+                function toggleac4(){
+                    var acToggle = document.getElementById("cpplusNVR");
+                   
+                    if(acToggle.checked){
+                        sendData_to_ai_cp(true)
+                    }else{
+                        sendData_to_ai_cp(false)
+                    }
+                }
+
+                function initializegsm4(){
+                    fetch('/get_active_integration_cp')
+                    .then(response=>{
+                        if(!response.ok){
+                            console.log("Error getting gsm status");
+                        }
+                        return response.json()
+                    })
+                    .then(data=>{
+                        var acToggle = document.getElementById("cpplusNVR");
+                       
+
+                        var active_ntegration = parseInt(data[0][2]);
+                        // console.log(data)
+                        acToggle.checked = active_ntegration;
+                        
+                    })
+                    .catch(error=>{
+                        console.log("Error getting gsm status")
+                    })
+                }
+                initializegsm4();
+
+                var activeIntegrationcpToggle = document.getElementById("cpplusNVR");
+                if(activeIntegrationcpToggle){
+                    activeIntegrationcpToggle.addEventListener("change", toggleac4);
+                } 
+
+
+    // active integration SPARS nvr
+    
+                function sendData_to_ai_sp(ac_activated_sp){
+                    var data ={
+                        "active_integration_sp" : ac_activated_sp
+                    };
+
+                    fetch('/data_active_integration_sp',{
+                        method: 'PUT',
+                        headers:{
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response=>{
+                        if(response.ok){
+                            console.log("Data sent")
+                        }else{
+                            console.log("Error sending data")
+                        }
+                    })
+                    .catch(error=>{
+                        console.log("Error sending data")
+                    })
+                }
+
+                function toggleac5(){
+                    var acToggle = document.getElementById("sparsNVR");
+                   
+                    if(acToggle.checked){
+                        sendData_to_ai_sp(true)
+                    }else{
+                        sendData_to_ai_sp(false)
+                    }
+                }
+
+                function initializegsm5(){
+                    fetch('/get_active_integration_sp')
+                    .then(response=>{
+                        if(!response.ok){
+                            console.log("Error getting gsm status");
+                        }
+                        return response.json()
+                    })
+                    .then(data=>{
+                        var acToggle = document.getElementById("sparsNVR");
+                       
+
+                        var active_ntegration = parseInt(data[0][2]);
+                        // console.log(data)
+                        acToggle.checked = active_ntegration;
+                        
+                    })
+                    .catch(error=>{
+                        console.log("Error getting gsm status")
+                    })
+                }
+                initializegsm5();
+
+                var activeIntegrationspToggle = document.getElementById("sparsNVR");
+                if(activeIntegrationspToggle){
+                    activeIntegrationspToggle.addEventListener("change", toggleac5);
+                } 
+
+
+                
+            })
+
+</script>
+{% endblock %}

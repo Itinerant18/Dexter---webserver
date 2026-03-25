@@ -1,0 +1,98 @@
+@app.route('/general_data', methods=['GET', 'POST'])
+def general_data():
+    if request.method == 'POST':
+        success_message = None
+        error_message = None
+        action = request.form.get('action')
+
+        if action == 'change_password':
+            current_password = request.form.get('currentPassword')
+            new_password = request.form.get('newPassword')
+            confirm_password = request.form.get('confirmPassword')
+
+            if not all([current_password, new_password, confirm_password]):
+                error_message = 'All password fields are required'
+            elif new_password != confirm_password:
+                error_message = 'New passwords do not match'
+            else:
+                db = create_connection(db_file)
+                if db:
+                    try:
+                        cursor = db.cursor()
+                        # Only verify current password from the text file
+                        try:
+                            with open(r'C:\Users\SEPLe-Admin\Downloads\Test-3\password_info.txt', 'r') as f:
+                                stored_password = f.read().strip()
+
+                            if stored_password == current_password:
+                                # Update password in the text file only
+                                with open(r'C:\Users\SEPLe-Admin\Downloads\Test-3\password_info.txt', 'w') as f:
+                                    f.write(new_password)
+                                success_message = 'Password updated successfully'
+                            else:
+                                error_message = 'Current password is incorrect'
+                        except Exception as e:
+                            print(f"Error accessing password file: {e}")
+                            error_message = 'Error accessing password file'
+                    except Exception:
+                        error_message = 'Error updating password'
+                    finally:
+                        cursor.close()
+                        db.close()
+                else:
+                    error_message = 'Database connection failed'
+
+        elif action == 'save_date':
+            new_date = request.form.get('setDate')
+            if not new_date:
+                error_message = 'Please select a date'
+            else:
+                try:
+                    success_message = 'Date updated successfully'
+                except Exception:
+                    error_message = 'Error updating date'
+
+        else:
+            brand_name = request.form.get('brandName')
+            site_name = request.form.get('siteName')
+
+            if not all([brand_name, site_name]):
+                error_message = 'Both brand name and site name are required'
+            else:
+                db = create_connection(db_file)
+                if db:
+                    try:
+                        cursor = db.cursor()
+                        cursor.execute("SELECT * FROM general WHERE ID=1")
+                        existing = cursor.fetchall()
+                        if existing:
+                            cursor.execute("UPDATE general SET brand_name=?, site_name=? WHERE ID=1",
+                                           (brand_name, site_name))
+                        else:
+                            cursor.execute("INSERT INTO general (brand_name, site_name) VALUES (?,?)",
+                                           (brand_name, site_name))
+                        db.commit()
+                        success_message = 'Brand and site information updated successfully'
+
+                        try:
+                            db2 = create_connection("dexterpanel2.db")
+                            if db2:
+                                cursor2 = db2.cursor()
+                                log_message = "General settings updated"
+                                cursor2.execute("INSERT INTO systemLogs (date, message) VALUES (datetime('now', 'localtime'), ?)",
+                                                (log_message,))
+                                db2.commit()
+                                cursor2.close()
+                                db2.close()
+                        except:
+                            pass
+
+                    except:
+                        error_message = 'Error updating settings'
+                    finally:
+                        cursor.close()
+                        db.close()
+                else:
+                    error_message = 'Database connection failed'
+
+    return redirect(url_for('general', success_message=success_message, error_message=error_message))

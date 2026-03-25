@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% block title %}Device Logs Settings{% endblock %}
+{% block body %}
+
+<div class="main-content">
+
+    <div class= "path_content" id="path_content"> 
+        <div id="breadcrumbContainer"><h5>Events & logs > Logs</h5></div>
+    </div>
+
+    <div class="container">
+
+    <button id="downloadButton"><i class="fas fa-download"></i> Download as Excel</button>
+
+
+        <h1>Device Logs</h1>
+        <table id="logsTable">
+            <thead>
+                <tr>
+                    <th>Device Type</th>
+                    <th>Log Type</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    
+                </tr>
+            </thead>
+            <tbody id="logsBody">
+                {% for log in logs %}
+                    <tr>
+                        <td id="refresh">{{ log[0] }}</td>
+                        <td id="refresh">{{ log[1] }}</td>
+                        <td id="refresh">{{ log[2] }}/{{ log[3] }}/{{ log[4] }}</td>
+                        <td id="refresh">{{ log[5] }}:{{ log[6] }}:{{ log[7] }}</td>
+                         
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <form action="/d" method="post">
+        <button id="dltBtn" type="submit">
+            <i class="fas fa-trash"></i>
+            Clear Logs
+        </button>
+
+        </form>
+    </div>
+</div>
+    <script src="{{url_for('static',filename='js/log.js')}}"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script> 
+
+
+{% endblock %}
+
+

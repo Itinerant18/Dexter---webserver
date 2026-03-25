@@ -1,0 +1,127 @@
+
+<div class="main-content">
+    <div class="path_content" id="path_content"> 
+        <div id="breadcrumbContainer"><h5>Device Integration > Integration Settings</h5></div>
+    </div>
+
+    <!-- Success message -->
+    {% if success_message %}
+    <div class="message-box success-message">
+        <i class="fas fa-check-circle"></i> {{ success_message }}
+    </div>
+    {% endif %}
+
+    <!-- Error message -->
+    {% if error_message %}
+    <div class="message-box error-message">
+        <i class="fas fa-exclamation-circle"></i> {{ error_message }}
+    </div>
+    {% endif %}
+
+    <!-- Active Integration Section -->
+    <div class="integration-container">
+        <h2 class="section-title">Active Integration</h2>
+        
+        <div class="integration-cards">
+            <!-- HIKVISION NVR Setup -->
+            <div class="integration-card" id="hikvision-nvr">
+                <h3 class="card-title">HIKVISION NVR Setup</h3>
+                <div class="status-indicator {% if hikvision_nvr_data and hikvision_nvr_data.is_active %}status-active{% else %}status-inactive{% endif %}" id="hikvision-nvr-status">
+                    <i class="fas {% if hikvision_nvr_data and hikvision_nvr_data.is_active %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+                    {% if hikvision_nvr_data and hikvision_nvr_data.is_active %}Active{% else %}Inactive{% endif %}
+                </div>
+                
+                <form id="hikvision-nvr-form" action="/integration_setting" method="POST">
+                    <input type="hidden" name="device_type" value="hikvision-nvr">
+                    <div class="form-group">
+                        <label for="hikvision-nvr-ip">IP Address</label>
+                        <input type="text" id="hikvision-nvr-ip" name="ip_address" placeholder="e.g., 192.168.1.100" value="{{ hikvision_nvr_data.ip_address if hikvision_nvr_data else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="hikvision-nvr-name">Device Name</label>
+                        <input type="text" id="hikvision-nvr-name" name="device_name" placeholder="e.g., Main NVR" value="{{ hikvision_nvr_data.device_name if hikvision_nvr_data else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="hikvision-nvr-password">Device Password</label>
+                        <input type="password" id="hikvision-nvr-password" name="device_password" placeholder="Enter password" value="{{ hikvision_nvr_data.device_password if hikvision_nvr_data else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="hikvision-nvr-port">Port Number</label>
+                        <input type="number" id="hikvision-nvr-port" name="port_number" placeholder="e.g., 8000" value="{{ hikvision_nvr_data.port_number if hikvision_nvr_data else '' }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Configuration</button>
+                </form>
+            </div>
+            
+            <!-- HIKVISION BACS Setup -->
+            <div class="integration-card" id="hikvision-bacs">
+                <h3 class="card-title">HIKVISION BACS Setup</h3>
+                <div class="status-indicator {% if hikvision_bacs_data and hikvision_bacs_data.is_active %}status-active{% else %}status-inactive{% endif %}" id="hikvision-bacs-status">
+                    <i class="fas {% if hikvision_bacs_data and hikvision_bacs_data.is_active %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+                    {% if hikvision_bacs_data and hikvision_bacs_data.is_active %}Active{% else %}Inactive{% endif %}
+                </div>
+                
+                <form id="hikvision-bacs-form" action="/integration_setting" method="POST">
+                    <input type="hidden" name="device_type" value="hikvision-bacs">
+                    <div class="form-group">
+                        <label for="hikvision-bacs-ip">IP Address</label>
+                        <input type="text" id="hikvision-bacs-ip" name="ip_address" placeholder="e.g., 192.168.1.101" value="{{ hikvision_bacs_data.ip_address if hikvision_bacs_data else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="hikvision-bacs-name">Device Name</label>
+                        <input type="text" id="hikvision-bacs-name" name="device_name" placeholder="e.g., Access Control" value="{{ hikvision_bacs_data.device_name if hikvision_bacs_data else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="hikvision-bacs-password">Device Password</label>
+                        <input type="password" id="hikvision-bacs-password" name="device_password" placeholder="Enter password" value="{{ hikvision_bacs_data.device_password if hikvision_bacs_data else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="hikvision-bacs-port">Port Number</label>
+                        <input type="number" id="hikvision-bacs-port" name="port_number" placeholder="e.g., 8001" value="{{ hikvision_bacs_data.port_number if hikvision_bacs_data else '' }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Configuration</button>
+                </form>
+            </div>
+            
+            <!-- DAHUA NVR Setup -->
+            <div class="integration-card" id="dahua-nvr">
+                <h3 class="card-title">DAHUA NVR Setup</h3>
+                <div class="status-indicator {% if dahua_nvr_data and dahua_nvr_data.is_active %}status-active{% else %}status-inactive{% endif %}" id="dahua-nvr-status">
+                    <i class="fas {% if dahua_nvr_data and dahua_nvr_data.is_active %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+                    {% if dahua_nvr_data and dahua_nvr_data.is_active %}Active{% else %}Inactive{% endif %}
+                </div>
+                
+                <form id="dahua-nvr-form" action="/integration_setting" method="POST">
+                    <input type="hidden" name="device_type" value="dahua-nvr">
+                    <div class="form-group">
+                        <label for="dahua-nvr-ip">IP Address</label>
+                        <input type="text" id="dahua-nvr-ip" name="ip_address" placeholder="e.g., 192.168.1.102" value="{{ dahua_nvr_data.ip_address if dahua_nvr_data else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="dahua-nvr-name">Device Name</label>
+                        <input type="text" id="dahua-nvr-name" name="device_name" placeholder="e.g., Backup NVR" value="{{ dahua_nvr_data.device_name if dahua_nvr_data else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="dahua-nvr-password">Device Password</label>
+                        <input type="password" id="dahua-nvr-password" name="device_password" placeholder="Enter password" value="{{ dahua_nvr_data.device_password if dahua_nvr_data else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="dahua-nvr-port">Port Number</label>
+                        <input type="number" id="dahua-nvr-port" name="port_number" placeholder="e.g., 8002" value="{{ dahua_nvr_data.port_number if dahua_nvr_data else '' }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Configuration</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Passive Integration Section -->
+    <div class="passive-integration">
+        <h2 class="section-title"> Passive Integration</h2>
+        <div class="passive-icon">
+            <i class="fas fa-tools"></i>
+        </div>
+        <p class="passive-message">This section will be implemented in the future. We will be back soon.</p>
+    </div>
+</div>
+{% endblock %}

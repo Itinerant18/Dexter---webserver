@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Security Panel</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Security Panel Control</h1>
+      <form method="POST" action="/control">
+        <div class="switch" id="Lamp Test" name="led" value="1">Lamp Test</div>
+        <div class="switch" id="Relay Test" name="led" value="2">Relay Test</div>
+        <div class="switch" id="Buzzer Test" name="led" value="3">Buzzer Test</div>
+      </form>
+    </div>
+  </body>
+</html>
