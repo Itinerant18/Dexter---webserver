@@ -1,42 +1,35 @@
 # -*- coding: utf-8 -*-
-from flask import Flask,flash, render_template, request, jsonify, session, url_for, redirect
-import sqlite3
-from sqlite3 import Error
 import os
 import sys
-from datetime import datetime
-
-# import SDL_DS1307
-from datetime import datetime
-
-# from main2 import led_states, toggle_led, cleanup, setup_gpio
-from datetime import timedelta
-import threading
-# sys.path.append(r"/home/pi/Test3/")
-sys.path.append('/home/pi/Test3')
-#from n_setti import clearLogsFromDB
-from SDL_DS1307 import SDL_DS1307
-from Lan_setting import resetDHCP
-from Lan_setting import configureStaticNetwork
-from Lan_setting import device_provisioning
-# from DeviceProvisioning_Module import form_basic
-# from TLChronosProMAIN_391 import resetToDefault
-
-import psutil
-import time
 import socket
 import logging
 import os.path
 import json
-# from watchdog.observers import Observer
-# from watchdog.events import FileSystemEventHandler
+import sqlite3
+import time
+import threading
+from sqlite3 import Error
+from datetime import datetime, timedelta
 
-# setup_gpio()
-time.sleep(59) # delay code
-sdlds1370 = SDL_DS1307()
+from flask import (
+    Flask,
+    flash,
+    render_template,
+    request,
+    jsonify,
+    session,
+    url_for,
+    redirect
+)
+
+import psutil
+
+sys.path.append('/home/pi/Test3')
+from Lan_setting import resetDHCP, configureStaticNetwork, device_provisioning
+
+# Initialize Flask app
 app = Flask(__name__)
 app.secret_key = "SEPLe"  # set secret key for session
-# site_info_file = "site_info.txt"  # Text file to store site information
 password_file = "/home/pi/TLChronosPro/AdminPass.txt"  # Full path to password file
 db_file = "sepleDB.db"
 
@@ -179,6 +172,11 @@ def stats():
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/financial")
+def financial():
+    return render_template("financial.html")
 
 
 @app.route("/delete")
@@ -1423,27 +1421,6 @@ def reports():
     return redirect(url_for("login"))
 
 
-# @app.route("/connectivity_settings")
-# def connectivity_settings():
-#     if "username" in session:
-#         username = session["username"]
-#         db = create_connection("sepleDB.db")
-#         cursor = db.cursor()
-#         cursor.execute("SELECT * FROM users WHERE username=?", (username,))
-#         user_data = cursor.fetchone()
-#         cursor.close()
-#         db.cursor()
-
-#         db3 = create_connection("dexterpanel2.db")
-#         cursor3 = db3.cursor()
-#         cursor3.execute("SELECT * FROM systemLogs ")
-#         logss_data = cursor3.fetchall()
-#         cursor3.close()
-#         db3.close()
-#         return render_template(
-#             "connectivity_sett.html", logg=logss_data, user=user_data
-#         )
-#     return redirect(url_for("login"))
 
 @app.route("/connectivity_settings", methods=["GET", "POST"])
 def connectivity_settings():
@@ -1524,90 +1501,6 @@ def connectivity_settings():
         user=user_data,
         logg=logss_data,
         saved_gsm_mode=saved_gsm_mode
-    )
-
-def connectivity_settings():
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    # ---------- SAVE DATA ----------
-    if request.method == "POST":
-        network_type = request.form.get("network_type")
-        gsm_modem_mode = request.form.get("gsm_modem_mode")
-
-        try:
-            db = create_connection("/home/pi/Test3/modem_config.db")
-            cursor = db.cursor()
-
-            cursor.execute("SELECT id FROM modem_parameters WHERE id = 1")
-            exists = cursor.fetchone()
-
-            if exists:
-                cursor.execute(
-                    "UPDATE modem_parameters SET network_type=?, gsm_modem_mode=? WHERE id=1",
-                    (network_type, gsm_modem_mode)
-                )
-            else:
-                cursor.execute(
-                    "INSERT INTO modem_parameters (id, network_type, gsm_modem_mode) VALUES (1, ?, ?)",
-                    (network_type, gsm_modem_mode)
-                )
-
-            db.commit()
-
-        except Exception as e:
-            print("? DB Error:", e)
-
-        finally:
-            cursor.close()
-            db.close()
-
-        return redirect(url_for("connectivity_settings"))
-
-    # ---------- FETCH DATA ----------
-    saved_network = ""
-    saved_sim = ""
-
-    try:
-        db = create_connection("/home/pi/Test3/modem_config.db")
-        cursor = db.cursor()
-        cursor.execute(
-            "SELECT network_type, gsm_modem_mode FROM modem_parameters WHERE id = 1"
-        )
-        row = cursor.fetchone()
-
-        if row:
-            saved_network = row[0] or ""
-            saved_sim = row[1] or ""
-
-    except Exception as e:
-        print("? Fetch Error:", e)
-
-    finally:
-        cursor.close()
-        db.close()
-
-    # ---------- EXISTING USER & LOG CODE ----------
-    db2 = create_connection("sepleDB.db")
-    cursor2 = db2.cursor()
-    cursor2.execute("SELECT * FROM users WHERE username=?", (session["username"],))
-    user_data = cursor2.fetchone()
-    cursor2.close()
-    db2.close()
-
-    db3 = create_connection("dexterpanel2.db")
-    cursor3 = db3.cursor()
-    cursor3.execute("SELECT * FROM systemLogs")
-    logss_data = cursor3.fetchall()
-    cursor3.close()
-    db3.close()
-
-    return render_template(
-        "connectivity_sett.html",
-        user=user_data,
-        logg=logss_data,
-        saved_network=saved_network,
-        saved_sim=saved_sim
     )
 
 @app.route("/get_eSim")
