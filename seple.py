@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import sys
 import socket
@@ -10,7 +9,6 @@ import time
 import threading
 from sqlite3 import Error
 from datetime import datetime, timedelta
-
 from flask import (
     Flask,
     flash,
@@ -18,7 +16,7 @@ from flask import (
     request,
     jsonify,
     session,
-    url_for,
+    url_for,   
     redirect
 )
 
@@ -190,7 +188,7 @@ def clear_logs():
     return redirect(url_for("logs"))
 
     # Initialize default users in database if they don't exist #
-# jay shree ram #
+
 def initialize_users():
     """Initialize default users in database if they don't exist"""
     db = create_connection(db_file)
@@ -239,10 +237,6 @@ def initialize_users():
         if db:
             db.close()
         return False
-
-
-
-
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -1187,118 +1181,6 @@ def general_data():
     )
 
 
-# @app.route("/general_data", methods=["GET", "POST"])
-# def general_data():
-#     if request.method == "POST":
-#         success_message = None
-#         error_message = None
-#         action = request.form.get("action")
-
-#         if action == "change_password":
-#             current_password = request.form.get("currentPassword")
-#             new_password = request.form.get("newPassword")
-#             confirm_password = request.form.get("confirmPassword")
-
-#             if not all([current_password, new_password, confirm_password]):
-#                 error_message = "All password fields are required"
-#             elif new_password != confirm_password:
-#                 error_message = "New passwords do not match"
-#             else:
-#                 db = create_connection(db_file)
-#                 if db:
-#                     try:
-#                         cursor = db.cursor()
-#                         # Only verify current password from the text file
-#                         try:
-#                             with open(r"/home/pi/TLChronosPro/AdminPass.txt", "r") as f:
-#                                 stored_password = f.read().strip()
-
-#                             if stored_password == current_password:
-#                                 # Update password in the text file only
-#                                 with open(
-#                                     r"/home/pi/TLChronosPro/AdminPass.txt", "w"
-#                                 ) as f:
-#                                     f.write(new_password)
-#                                 success_message = "Password updated successfully"
-#                             else:
-#                                 error_message = "Current password is incorrect"
-#                         except Exception as e:
-#                             print(f"Error accessing password file: {e}")
-#                             error_message = "Error accessing password file"
-#                     except Exception:
-#                         error_message = "Error updating password"
-#                     finally:
-#                         cursor.close()
-#                         db.close()
-#                 else:
-#                     error_message = "Database connection failed"
-
-#         elif action == "save_date":
-#             new_date = request.form.get("setDate")
-#             if not new_date:
-#                 error_message = "Please select a date"
-#             else:
-#                 try:
-#                     success_message = "Date updated successfully"
-#                 except Exception:
-#                     error_message = "Error updating date"
-
-#         else:
-#             brand_name = request.form.get("brandName")
-#             site_name = request.form.get("siteName")
-
-#             if not all([brand_name, site_name]):
-#                 error_message = "Both brand name and site name are required"
-#             else:
-#                 db = create_connection(db_file)
-#                 if db:
-#                     try:
-#                         cursor = db.cursor()
-#                         cursor.execute("SELECT * FROM general WHERE ID=1")
-#                         existing = cursor.fetchall()
-#                         if existing:
-#                             cursor.execute(
-#                                 "UPDATE general SET brand_name=?, site_name=? WHERE ID=1",
-#                                 (brand_name, site_name),
-#                             )
-#                         else:
-#                             cursor.execute(
-#                                 "INSERT INTO general (brand_name, site_name) VALUES (?,?)",
-#                                 (brand_name, site_name),
-#                             )
-#                         db.commit()
-#                         success_message = (
-#                             "Brand and site information updated successfully"
-#                         )
-
-#                         try:
-#                             db2 = create_connection("dexterpanel2.db")
-#                             if db2:
-#                                 cursor2 = db2.cursor()
-#                                 log_message = "General settings updated"
-#                                 cursor2.execute(
-#                                     "INSERT INTO systemLogs (date, message) VALUES (datetime('now', 'localtime'), ?)",
-#                                     (log_message,),
-#                                 )
-#                                 db2.commit()
-#                                 cursor2.close()
-#                                 db2.close()
-#                         except:
-#                             pass
-
-#                     except:
-#                         error_message = "Error updating settings"
-#                     finally:
-#                         cursor.close()
-#                         db.close()
-#                 else:
-#                     error_message = "Database connection failed"
-
-#     return redirect(
-#         url_for("general", success_message=success_message, error_message=error_message)
-# )
-
-
 @app.route("/maintenance")
 def maintenance():
     if "username" in session:
@@ -2088,200 +1970,6 @@ def sendData2():
     # return ({"data":"send"})
 
 
-
-
-
-
-
-# @app.route("/output_controls")
-# def output_controls():
-#     if "username" in session:
-#         username = session["username"]
-#         db = create_connection("sepleDB.db")
-#         cursor = db.cursor()
-#         cursor.execute("SELECT * FROM users WHERE username=?", (username,))
-#         user = cursor.fetchone()
-#         cursor.close()
-#         db.close()
-
-#         db3 = create_connection("dexterpanel2.db")
-#         cursor3 = db3.cursor()
-#         cursor3.execute("SELECT * FROM systemLogs ")
-#         logss_data = cursor3.fetchall()
-#         cursor3.close()
-#         db3.close()
-
-#         return render_template("output_controls.html", logg=logss_data, user=user)
-#     return redirect(url_for("login"))
-
-
-# @app.route("/get_activeIntegration")
-# def get_activeIntegration():
-#     if "username" in session:
-#         db = create_connection("/home/pi/Test3/active_integration.db")
-#         if db:
-#             cursor = db.cursor()
-#             cursor.execute("SELECT * FROM active_integration_external_device")
-#             ac_data = cursor.fetchall()
-#             cursor.close()
-#             db.close()
-#             return jsonify(ac_data)
-#         else:
-#             return jsonify({"data": "error"})
-
-
-# @app.route("/data_active_integration", methods=["PUT"])
-# def data_active_integration():
-#     if request.method == "PUT":
-#         data = request.json
-#         active_integration_external = data.get("active_integration_external_device")
-#         db = create_connection("/home/pi/Test3/active_integration.db")
-#         if db:
-#             cursor = db.cursor()
-#             cursor.execute(
-#                 "SELECT * FROM active_integration_external_device WHERE ID=1"
-#             )
-#             existing = cursor.fetchall()
-#             if existing:
-#                 cursor.execute(
-#                     "UPDATE active_integration_external_device SET active_integration_on_off_bit=? WHERE ID=1",
-#                     (active_integration_external,),
-#                 )
-#             else:
-#                 cursor.execute(
-#                     "INSERT INTO active_integration_external_device (active_integration_on_off_bit) VALUES (?)",
-#                     (active_integration_external,),
-#                 )
-#         db.commit()
-#         cursor.close()
-#         db.close()
-#         return {"data": "send"}
-
-
-# @app.route("/get_active_integration_hikvidion")
-# def get_active_integration_hikvidion():
-#     if "username" in session:
-#         db = create_connection("/home/pi/Test3/logical_params_active_integration.db")
-#         if db:
-#             cursor = db.cursor()
-#             cursor.execute("SELECT * FROM parameters where id=1")
-#             ac_data = cursor.fetchall()
-#             cursor.close()
-#             db.close()
-#             return jsonify(ac_data)
-#         else:
-#             return jsonify({"data": "error"})
-
-
-# @app.route("/data_active_integration_hikvidion", methods=["PUT"])
-# def data_active_integration_hikvidion():
-#     if request.method == "PUT":
-#         data = request.json
-#         active_integration_external_hk = data.get("active_integration_hikvision")
-#         db = create_connection("/home/pi/Test3/logical_params_active_integration.db")
-#         if db:
-#             cursor = db.cursor()
-#             cursor.execute("SELECT * FROM parameters where id=1")
-#             existing = cursor.fetchall()
-#             if existing:
-#                 cursor.execute(
-#                     "UPDATE parameters SET value=? WHERE id=1",
-#                     (active_integration_external_hk,),
-#                 )
-#             else:
-#                 cursor.execute(
-#                     "INSERT INTO parameters (value) VALUES (?) where id=1",
-#                     (active_integration_external_hk,),
-#                 )
-#         db.commit()
-#         cursor.close()
-#         db.close()
-#         return {"data": "send"}
-
-
-# @app.route("/get_active_integration_ac")
-# def get_active_integration_ac():
-#     if "username" in session:
-#         db = create_connection("/home/pi/Test3/logical_params_active_integration.db")
-#         if db:
-#             cursor = db.cursor()
-#             cursor.execute("SELECT * FROM parameters where id=2")
-#             ac_data = cursor.fetchall()
-#             cursor.close()
-#             db.close()
-#             return jsonify(ac_data)
-#         else:
-#             return jsonify({"data": "error"})
-
-
-# @app.route("/data_active_integration_ac", methods=["PUT"])
-# def data_active_integration_ac():
-#     if request.method == "PUT":
-#         data = request.json
-#         active_integration_external_ac = data.get("active_integration_ac")
-#         db = create_connection("/home/pi/Test3/logical_params_active_integration.db")
-#         if db:
-#             cursor = db.cursor()
-#             cursor.execute("SELECT * FROM parameters where id=2")
-#             existing = cursor.fetchall()
-#             if existing:
-#                 cursor.execute(
-#                     "UPDATE parameters SET value=? WHERE id=2",
-#                     (active_integration_external_ac,),
-#                 )
-#             else:
-#                 cursor.execute(
-#                     "INSERT INTO parameters (value) VALUES (?) where id=2",
-#                     (active_integration_external_ac,),
-#                 )
-#         db.commit()
-#         cursor.close()
-#         db.close()
-#         return {"data": "send"}
-
-
-# @app.route("/get_active_integration_dh")
-# def get_active_integration_dh():
-#     if "username" in session:
-#         db = create_connection("/home/pi/Test3/logical_params_active_integration.db")
-#         if db:
-#             cursor = db.cursor()
-#             cursor.execute("SELECT * FROM parameters where id=3")
-#             ac_data = cursor.fetchall()
-#             cursor.close()
-#             db.close()
-#             return jsonify(ac_data)
-#         else:
-#             return jsonify({"data": "error"})
-
-
-# @app.route("/data_active_integration_dh", methods=["PUT"])
-# def data_active_integration_dh():
-#     if request.method == "PUT":
-#         data = request.json
-#         active_integration_external_dh = data.get("active_integration_dh")
-#         db = create_connection("/home/pi/Test3/logical_params_active_integration.db")
-#         if db:
-#             cursor = db.cursor()
-#             cursor.execute("SELECT * FROM parameters where id=3")
-#             existing = cursor.fetchall()
-#             if existing:
-#                 cursor.execute(
-#                     "UPDATE parameters SET value=? WHERE id=3",
-#                     (active_integration_external_dh,),
-#                 )
-#             else:
-#                 cursor.execute(
-#                     "INSERT INTO parameters (value) VALUES (?) where id=3",
-#                     (active_integration_external_dh,),
-#                 )
-#         db.commit()
-#         cursor.close()
-#         db.close()
-#         return {"data": "send"}
-
-
-
 @app.route("/output_controls")
 def output_controls():
     if "username" in session:
@@ -2552,12 +2240,6 @@ def data_active_integration_sp():
         cursor.close()
         db.close()
         return {"data": "send"}
-
-
-
-
-
-
 
 
 @app.route("/device_management")
@@ -3282,41 +2964,6 @@ def integration_settings():
     # print(f"{hikvision_nvr_data['camera_ip']}//{hikvision_bacs_data['camera_ip']}//{dahua_nvr_data['camera_ip']}")
     return redirect(url_for("login"))
 
-
-# @app.route('/save_camera_integration', methods=['POST'])
-# def save_camera_integration():
-#     if 'username' not in session:
-#         return redirect(url_for('login'))
-
-#     form_data = request.form  # Use this for form data
-#     camera_map = {}
-
-#     for key, value in form_data.items():
-#         if key.startswith("camera_"):
-#             parts = key.split("_")
-#             index = parts[1]
-#             field = parts[2]
-#             if index not in camera_map:
-#                 camera_map[index] = {}
-#             camera_map[index][field] = value
-
-#     result = [camera_map[i] for i in sorted(camera_map.keys(), key=int)]
-
-#     for i in result:
-#         device_type = i['type']
-#         cameraIp = {
-#             "ip_address": i['ip'],
-#             "username": i['username'],
-#             "password": i['password']
-#         }
-
-#         db = create_connection("device_config.db")
-#         cursor = db.cursor()
-#         cursor.execute('''UPDATE device_parameters set camera_ip=? WHERE device_type=? ''',(cameraIp,device_type))
-#         db.commit()
-#         cursor.close()
-#         db.close()
-#     return result
 
 
 @app.route("/senddata", methods=["POST"])
