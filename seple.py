@@ -4,7 +4,7 @@ import socket
 import logging
 import os.path
 import json
-import sqlite3
+import sqlite3 
 import time
 import threading
 from sqlite3 import Error
@@ -177,15 +177,37 @@ def financial():
     return render_template("financial.html")
 
 
-@app.route("/delete")
+@app.route("/delete", methods=["GET", "POST"])
 def clear_logs():
-
-    connection = sqlite3.connect("/home/pi/Test3/dexterpanel2.db")
-    cursor = connection.cursor()
-    cursor.execute("DELETE FROM systemLogs")
-    connection.commit()
-    connection.close()
-    return redirect(url_for("logs"))
+    if "username" not in session:
+        return redirect(url_for("login"))
+    
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        username = session.get("username")
+        
+        # Verify password
+        db = create_connection(db_file)
+        if db:
+            cursor = db.cursor()
+            cursor.execute("SELECT password FROM users WHERE username=?", (username,))
+            user_data = cursor.fetchone()
+            cursor.close()
+            db.close()
+            
+            if user_data and user_data[0] == password:
+                # Password verified - proceed with delete
+                connection = sqlite3.connect("/home/pi/Test3/dexterpanel2.db")
+                cursor = connection.cursor()
+                cursor.execute("DELETE FROM systemLogs")
+                connection.commit()
+                connection.close()
+                return redirect(url_for("logs"))
+            else:
+                return render_template("logs.html", delete_error="Invalid password")
+    
+    # GET request - show password prompt
+    return render_template("logs.html", delete_prompt=True)
 
     # Initialize default users in database if they don't exist #
 
@@ -422,18 +444,76 @@ def reboot_rpi():
     os.system("sudo /sbin/reboot")
 
 
-@app.route("/restart", methods=["POST"])
+@app.route("/restart", methods=["GET", "POST"])
 def restart():
-    session_clear()
-    threading.Timer(30.0, reboot_rpi).start()
-    return "Rebooting..."
+    if "username" not in session:
+        return redirect(url_for("login"))
+    
+    if request.method == "POST":
+        # Handle both JSON and form data
+        if request.is_json:
+            data = request.get_json()
+            password = data.get("password", "") if data else ""
+        else:
+            password = request.form.get("password", "")
+        
+        username = session.get("username")
+        
+        # Verify password
+        db = create_connection(db_file)
+        if db:
+            cursor = db.cursor()
+            cursor.execute("SELECT password FROM users WHERE username=?", (username,))
+            user_data = cursor.fetchone()
+            cursor.close()
+            db.close()
+            
+            if user_data and user_data[0] == password:
+                # Password verified - proceed with restart
+                session_clear()
+                threading.Timer(30.0, reboot_rpi).start()
+                return jsonify({"status": "success", "message": "System restart initiated"})
+            else:
+                return jsonify({"status": "error", "message": "Invalid password"}), 401
+    
+    # GET request - show password prompt
+    return render_template("maintenance.html", restart_prompt=True)
 
 
-@app.route("/terminate", methods=["POST", "GET"])
+@app.route("/terminate", methods=["GET", "POST"])
 def terminate():
-    session_clear()
-    threading.Timer(1.0, lambda: terminate_server()).start()
-    return render_template("index.html", poweroff=True)
+    if "username" not in session:
+        return redirect(url_for("login"))
+    
+    if request.method == "POST":
+        # Handle both JSON and form data
+        if request.is_json:
+            data = request.get_json()
+            password = data.get("password", "") if data else ""
+        else:
+            password = request.form.get("password", "")
+        
+        username = session.get("username")
+        
+        # Verify password
+        db = create_connection(db_file)
+        if db:
+            cursor = db.cursor()
+            cursor.execute("SELECT password FROM users WHERE username=?", (username,))
+            user_data = cursor.fetchone()
+            cursor.close()
+            db.close()
+            
+            if user_data and user_data[0] == password:
+                # Password verified - proceed with terminate
+                session_clear()
+                threading.Timer(1.0, lambda: terminate_server()).start()
+                return jsonify({"status": "success", "message": "System shutdown initiated"})
+            else:
+                return jsonify({"status": "error", "message": "Invalid password"}), 401
+    
+    # GET request - show password prompt
+    return render_template("maintenance.html", terminate_prompt=True)
 
 
 def terminate_server():

@@ -362,10 +362,35 @@
 
     <script>
         function restart() {
-            fetch('/restart', { method: 'POST' })
-                .then(response => response.text())
-                .then(data => alert(data))
-                .catch(error => console.error('Error:', error));
+            // Ask for login password before proceeding
+            var password = prompt('Please enter your login password to confirm restart:');
+            
+            if (password === null) {
+                // User cancelled the prompt
+                return;
+            }
+            
+            if (password.trim() === '') {
+                alert('Password is required to restart the system.');
+                return;
+            }
+            
+            fetch('/restart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('System restart initiated.');
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
         }
 
         function terminate() {
@@ -392,6 +417,19 @@
         }
 
         function handleReboot() {
+            // Ask for login password before proceeding
+            var password = prompt('Please enter your login password to confirm reboot:');
+            
+            if (password === null) {
+                // User cancelled the prompt
+                return;
+            }
+            
+            if (password.trim() === '') {
+                alert('Password is required to reboot the system.');
+                return;
+            }
+            
             if (confirm("Are you sure you want to reboot the system?")) {
                 // Show a loading indicator
                 const loadingOverlay = document.createElement('div');
@@ -399,19 +437,26 @@
                 loadingOverlay.innerHTML = '<div class="loading-spinner"></div><p>System is rebooting...</p>';
                 document.body.appendChild(loadingOverlay);
 
-                // Send POST request to /restart
+                // Send POST request to /restart with password
                 fetch('/restart', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password: password })
                 })
                     .then(response => {
                         if (!response.ok) {
                             throw new Error("Reboot failed");
                         }
-                        return response.text();
+                        return response.json();
                     })
                     .then(data => {
-                        console.log("Reboot initiated.");
-                        // Optionally update UI or redirect
+                        if (data.status === 'success') {
+                            console.log("Reboot initiated.");
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
                     })
                     .catch(error => {
                         console.error("Error:", error);

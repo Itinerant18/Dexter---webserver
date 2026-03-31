@@ -61,6 +61,19 @@
         });
 
         function restart() {
+            // Ask for login password before proceeding
+            var password = prompt('Please enter your login password to confirm restart:');
+            
+            if (password === null) {
+                // User cancelled the prompt
+                return;
+            }
+            
+            if (password.trim() === '') {
+                alert('Password is required to restart the system.');
+                return;
+            }
+            
             if (confirm('Are you sure you want to restart the system?')) {
                 // Add vibration feedback for mobile
                 if (navigator.vibrate) {
@@ -71,7 +84,8 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify({ password: password })
                 })
                 .then(response => response.json())
                 .then(data => {
