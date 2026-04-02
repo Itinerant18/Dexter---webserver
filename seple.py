@@ -4,7 +4,7 @@ import socket
 import logging
 import os.path
 import json
-import sqlite3
+import sqlite3 
 import time
 import threading
 from sqlite3 import Error
@@ -19,8 +19,11 @@ from flask import (
     url_for,   
     redirect
 )
-
 import psutil
+import tarfile
+import tempfile
+import shutil
+import subprocess as _sp
 
 sys.path.append('/home/pi/Test3')
 from Lan_setting import resetDHCP, configureStaticNetwork, device_provisioning
@@ -177,15 +180,37 @@ def financial():
     return render_template("financial.html")
 
 
-@app.route("/delete")
+@app.route("/delete", methods=["GET", "POST"])
 def clear_logs():
-
-    connection = sqlite3.connect("/home/pi/Test3/dexterpanel2.db")
-    cursor = connection.cursor()
-    cursor.execute("DELETE FROM systemLogs")
-    connection.commit()
-    connection.close()
-    return redirect(url_for("logs"))
+    if "username" not in session:
+        return redirect(url_for("login"))
+    
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        username = session.get("username")
+        
+        # Verify password
+        db = create_connection(db_file)
+        if db:
+            cursor = db.cursor()
+            cursor.execute("SELECT password FROM users WHERE username=?", (username,))
+            user_data = cursor.fetchone()
+            cursor.close()
+            db.close()
+            
+            if user_data and user_data[0] == password:
+                # Password verified - proceed with delete
+                connection = sqlite3.connect("/home/pi/Test3/dexterpanel2.db")
+                cursor = connection.cursor()
+                cursor.execute("DELETE FROM systemLogs")
+                connection.commit()
+                connection.close()
+                return redirect(url_for("logs"))
+            else:
+                return render_template("logs.html", delete_error="Invalid password")
+    
+    # GET request - show password prompt
+    return render_template("logs.html", delete_prompt=True)
 
     # Initialize default users in database if they don't exist #
 
@@ -422,18 +447,76 @@ def reboot_rpi():
     os.system("sudo /sbin/reboot")
 
 
-@app.route("/restart", methods=["POST"])
+@app.route("/restart", methods=["GET", "POST"])
 def restart():
-    session_clear()
-    threading.Timer(30.0, reboot_rpi).start()
-    return "Rebooting..."
+    if "username" not in session:
+        return redirect(url_for("login"))
+    
+    if request.method == "POST":
+        # Handle both JSON and form data
+        if request.is_json:
+            data = request.get_json()
+            password = data.get("password", "") if data else ""
+        else:
+            password = request.form.get("password", "")
+        
+        username = session.get("username")
+        
+        # Verify password
+        db = create_connection(db_file)
+        if db:
+            cursor = db.cursor()
+            cursor.execute("SELECT password FROM users WHERE username=?", (username,))
+            user_data = cursor.fetchone()
+            cursor.close()
+            db.close()
+            
+            if user_data and user_data[0] == password:
+                # Password verified - proceed with restart
+                session_clear()
+                threading.Timer(30.0, reboot_rpi).start()
+                return jsonify({"status": "success", "message": "System restart initiated"})
+            else:
+                return jsonify({"status": "error", "message": "Invalid password"}), 401
+    
+    # GET request - show password prompt
+    return render_template("maintenance.html", restart_prompt=True)
 
 
-@app.route("/terminate", methods=["POST", "GET"])
+@app.route("/terminate", methods=["GET", "POST"])
 def terminate():
-    session_clear()
-    threading.Timer(1.0, lambda: terminate_server()).start()
-    return render_template("index.html", poweroff=True)
+    if "username" not in session:
+        return redirect(url_for("login"))
+    
+    if request.method == "POST":
+        # Handle both JSON and form data
+        if request.is_json:
+            data = request.get_json()
+            password = data.get("password", "") if data else ""
+        else:
+            password = request.form.get("password", "")
+        
+        username = session.get("username")
+        
+        # Verify password
+        db = create_connection(db_file)
+        if db:
+            cursor = db.cursor()
+            cursor.execute("SELECT password FROM users WHERE username=?", (username,))
+            user_data = cursor.fetchone()
+            cursor.close()
+            db.close()
+            
+            if user_data and user_data[0] == password:
+                # Password verified - proceed with terminate
+                session_clear()
+                threading.Timer(1.0, lambda: terminate_server()).start()
+                return jsonify({"status": "success", "message": "System shutdown initiated"})
+            else:
+                return jsonify({"status": "error", "message": "Invalid password"}), 401
+    
+    # GET request - show password prompt
+    return render_template("maintenance.html", terminate_prompt=True)
 
 
 def terminate_server():
@@ -3409,6 +3492,159 @@ def quick_settings():
         mpdata=mpdata,
         integration=integration_data
     )
+
+    # =============================================================================
+# BACKUP & RESTORE ROUTES
+# Backup: GET  /backup_download  → streams dexter_backup.tar.gz to browser
+# Restore: POST /backup_restore   → accepts uploaded .tar.gz, extracts it
+# =============================================================================
+
+
+
+# Files included in every backup
+_BACKUP_FILES = [
+    "/etc/dexter/fernet.key",
+    "/etc/dexter/cred_auth.key",
+    "/home/pi/Test3/device_config.db",
+    "/home/pi/Test3/modem_config.db",
+    "/home/pi/Test3/logical_params_active_integration.db",
+    "/home/pi/Test3/network_settings.db",
+    "/home/pi/Test3/operator_codes.db",
+    "/home/pi/Test3/dexterpanel2.db",
+    "/home/pi/Test3/parameters.db",
+    "/home/pi/Test3/cavliRunningParam.db",
+    "/home/pi/Test3/cavliPositionParameter.db",
+    "/home/pi/Test3/nvr_dvr_bacs_integration.db",
+    "/home/pi/Test3/active_integration.db",
+]
+
+
+@app.route("/backup_download")
+def backup_download():
+    """
+    Create a backup archive of all site-specific DB and key files,
+    then send it directly to the engineer phone as a download.
+    Only site_engineer role can access this.
+    """
+    from flask import send_file
+    import io
+
+    if not check_user_access("site_engineer"):
+        return jsonify({"status": "error", "message": "Access denied — site engineer login required"}), 403
+
+    try:
+        # Build archive in memory
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+            for filepath in _BACKUP_FILES:
+                if os.path.isfile(filepath):
+                    # Store with full absolute path preserved
+                    tar.add(filepath, arcname=filepath.lstrip("/"))
+                else:
+                    app.logger.warning("Backup: skipping missing file: %s", filepath)
+        buf.seek(0)
+
+        hostname = socket.gethostname()
+        ts       = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"dexter_backup_{hostname}_{ts}.tar.gz"
+
+        app.logger.info("Backup created: %s", filename)
+        return send_file(
+            buf,
+            mimetype="application/gzip",
+            as_attachment=True,
+            download_name=filename
+        )
+
+    except Exception as e:
+        app.logger.error("Backup failed: %s", e)
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/backup_restore", methods=["POST"])
+def backup_restore():
+    """
+    Accept an uploaded dexter_backup_*.tar.gz file, stop Dexter services,
+    extract the archive restoring all files to their original paths,
+    fix permissions, then restart services.
+    Only site_engineer role can access this.
+    """
+    if not check_user_access("site_engineer"):
+        return jsonify({"status": "error", "message": "Access denied — site engineer login required"}), 403
+
+    if "backup_file" not in request.files:
+        return jsonify({"status": "error", "message": "No file uploaded"}), 400
+
+    f = request.files["backup_file"]
+    if not f.filename.endswith(".tar.gz"):
+        return jsonify({"status": "error", "message": "File must be a .tar.gz backup archive"}), 400
+
+    try:
+        # Save upload to temp file
+        tmp = tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False)
+        f.save(tmp.name)
+        tmp.close()
+
+        # Validate it is a real tar.gz
+        if not tarfile.is_tarfile(tmp.name):
+            os.unlink(tmp.name)
+            return jsonify({"status": "error", "message": "Invalid archive file"}), 400
+
+        restored = []
+        skipped  = []
+
+        # Stop Dexter services
+        _sp.run(["sudo", "systemctl", "stop", "dexter.target"],
+                capture_output=True, timeout=15)
+
+        # Extract — restore each file to its absolute path
+        with tarfile.open(tmp.name, "r:gz") as tar:
+            for member in tar.getmembers():
+                # member.name is stored without leading slash e.g. "etc/dexter/fernet.key"
+                dest = "/" + member.name
+                if not member.isfile():
+                    continue
+                os.makedirs(os.path.dirname(dest), exist_ok=True)
+                with tar.extractfile(member) as src, open(dest, "wb") as dst:
+                    dst.write(src.read())
+                restored.append(dest)
+
+        os.unlink(tmp.name)
+
+        # Fix permissions on keys
+        for key_path, owner, mode in [
+            ("/etc/dexter/fernet.key",   "root:pi", 0o640),
+            ("/etc/dexter/cred_auth.key","root:pi", 0o640),
+        ]:
+            if os.path.exists(key_path):
+                os.chmod(key_path, mode)
+                _sp.run(["sudo", "chown", owner, key_path],
+                        capture_output=True, timeout=5)
+
+        # Fix permissions on DB files
+        for db_path in _BACKUP_FILES:
+            if db_path.endswith(".db") and os.path.exists(db_path):
+                os.chmod(db_path, 0o660)
+                _sp.run(["sudo", "chown", "pi:pi", db_path],
+                        capture_output=True, timeout=5)
+
+        # Restart Dexter services
+        _sp.run(["sudo", "systemctl", "start", "dexter.target"],
+                capture_output=True, timeout=15)
+
+        app.logger.info("Restore complete. Files restored: %s", restored)
+        return jsonify({
+            "status": "success",
+            "message": f"Restore complete. {len(restored)} files restored.",
+            "restored": restored,
+        })
+
+    except Exception as e:
+        app.logger.error("Restore failed: %s", e)
+        # Try to restart services even on error
+        _sp.run(["sudo", "systemctl", "start", "dexter.target"],
+                capture_output=True, timeout=15)
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 if __name__ == "__main__":
